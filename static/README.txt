@@ -1,0 +1,1 @@
+Place static assets here. For demo this project uses inline scripts in templates.
