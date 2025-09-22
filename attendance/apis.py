@@ -14,7 +14,7 @@ def get_qr(request):
     s = Session.objects.create(token=token, numeric_code=numeric_code)
 
     # this needs to be changed with FE url
-    mobile_url = request.build_absolute_uri(f'attendance/confirm/{token}/')
+    mobile_url = 'http://localhost:5173//{token}/'
     # Generate QR image
     qr = qrcode.make(mobile_url)
     buffer = BytesIO()
