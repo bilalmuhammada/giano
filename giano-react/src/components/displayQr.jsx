@@ -44,7 +44,7 @@ export default function QRCodeDisplay() {
             {data && (
               <>
                 {/* QR Code */}
-                <div className="bg-gray-50 p-4 rounded-xl shadow-inner mt-4">
+                <div className="bg-gray-50 py-4 rounded-xl shadow-inner mt-4">
                   <img
                     src={`data:image/png;base64,${data.qr_base64}`}
                     alt="QR Code"

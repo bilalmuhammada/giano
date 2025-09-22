@@ -5,7 +5,7 @@ const API_BASE = "http://127.0.0.1:8000/attendance";
 export const getQRCode = async () => {
   try {
     const response = await axios.get(`${API_BASE}/get_qr/`);
-    return response.data;
+    return response.data.data;
   } catch (error) {
     console.error("Error fetching QR code:", error);
     return null;
@@ -35,7 +35,8 @@ export const confirmAttendance = async (token) => {
 export const getRecords = async () => {
   try {
     const response = await axios.get(`${API_BASE}/records/`);
-    return response.data;
+    console.log(response);
+    return response.data.data;
   } catch (error) {
     console.error("Error fetching records:", error);
     return [];

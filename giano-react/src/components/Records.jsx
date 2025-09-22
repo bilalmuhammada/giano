@@ -8,7 +8,7 @@ const Records = () => {
     axios
       .get("http://127.0.0.1:8000/attendance/records/")
       .then((res) => {
-        setRecords(res.data.records); // <-- Correct
+        setRecords(res.data.data.records); // <-- Correct
       })
       .catch((err) => console.error("Error fetching records:", err));
   }, []);
