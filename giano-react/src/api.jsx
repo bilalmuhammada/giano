@@ -22,13 +22,44 @@ export const getStatus = async (token) => {
   }
 };
 
-export const confirmAttendance = async (token) => {
+
+export const confirmAttendance = async (token, code) => {
+  if (!token || !code) {
+    return { success: false, message: "Token and code are required" };
+  }
+
+  // Get CSRF token from cookies
+  const csrftoken = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("csrftoken="))
+    ?.split("=")[1];
+
   try {
-    const response = await axios.post(`${API_BASE}/confirm/${token}/`);
+    const response = await axios.post(
+      `${API_BASE}/confirm/${token}/`,
+      { code },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrftoken, // Include CSRF token
+        },
+        withCredentials: true, // Ensure credentials (cookies) are sent
+      }
+    );
+
     return response.data;
   } catch (error) {
-    console.error("Error confirming attendance:", error);
-    return null;
+    console.error(
+      "Error confirming attendance:",
+      error.response ? error.response.data : error.message
+    );
+
+    return {
+      success: false,
+      message:
+        (error.response && error.response.data?.message) ||
+        "Failed to confirm attendance",
+    };
   }
 };
 

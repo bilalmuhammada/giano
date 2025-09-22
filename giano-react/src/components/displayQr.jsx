@@ -1,29 +1,66 @@
 import React, { useState, useEffect } from "react";
 import { getQRCode, getStatus, confirmAttendance } from "../api";
-
-export default function QRCodeDisplay() {
+import { Link } from "react-router-dom";
+export default function displayQr() {
   const [data, setData] = useState(null);
   const [status, setStatus] = useState(null);
-
+  const [confirmMsg, setConfirmMsg] = useState("");
+  const [loading, setLoading] = useState(false); // ✅ add this
   const fetchQRCode = async () => {
     const response = await getQRCode();
     setData(response);
   };
 
   // Poll status every 3 seconds
+  
+
   useEffect(() => {
     if (!data?.token) return;
-    const interval = setInterval(async () => {
-      const s = await getStatus(data.token);
-      setStatus(s?.status);
-    }, 3000);
-    return () => clearInterval(interval);
+
+    const fetchStatus = async () => {
+      try {
+        const s = await getStatus(data.token);
+        console.log("Fetched status:", s.data); // ✅ log here
+        setStatus(s.data?.verified ?? false); // default to false if undefined
+      } catch (error) {
+        console.error("Error fetching status:", error);
+      }
+    };
+
+
+    console.log("Starting status polling for token:", data.token);
+    // Initial fetch immediately
+    fetchStatus();
+
+    // Poll every 3 seconds
+    const interval = setInterval(fetchStatus, 3000);
+
+    return () => clearInterval(interval); // cleanup on unmount
   }, [data]);
 
   const handleConfirm = async (choice) => {
-    await confirmAttendance(data.token);
-    alert(`Attendance confirmed with choice: ${choice}`);
+    setLoading(true);
+    let response = null;
+  
+    try {
+      response = await confirmAttendance(data.token, choice);
+    } catch (err) {
+      console.error("Error confirming attendance:", err);
+      alert("Error confirming attendance ❌");
+      setLoading(false);
+      return;
+    }
+  
+    console.log("Confirm response:", response);
+    if (response?.success) {
+      alert(`Attendance confirmed ✅ Action: ${response.data.action}`);
+    } else {
+      alert(`Failed ❌: ${response?.message || "Unknown error"}`);
+    }
+  
+    setLoading(false);
   };
+  
 
   return (
     
@@ -53,7 +90,11 @@ export default function QRCodeDisplay() {
                 </div>
       
                 {/* Status */}
-                <p className="text-gray-700 font-medium mt-2">Status: {status || "Waiting"}</p>
+                
+                <p className="text-gray-700 font-medium mt-2">
+      Status: {status ? "Confirm" : "Waiting"}
+    </p>
+
       
                 {/* Numeric choices */}
                 <div className="grid grid-cols-3 gap-3 w-full mt-4">
@@ -69,14 +110,12 @@ export default function QRCodeDisplay() {
                 </div>
       
                 {/* Mobile URL */}
-                <a
-                  href={data.mobile_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 font-medium underline mt-4 hover:text-blue-800"
-                >
-                  Open Mobile URL
-                </a>
+                <Link
+              to={`/mobile/${data.token}`}   // route path for Mobile.jsx
+              className="text-blue-600 font-medium underline mt-4 hover:text-blue-800"
+            >
+              Open Mobile UI
+            </Link>
               </>
             )}
           </div>

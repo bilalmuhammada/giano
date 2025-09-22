@@ -10,6 +10,12 @@ from ..helpers.responseHelper import api_response
 from ..models.sessionModel import Session
 from ..models.attendanceModel import Attendance
 import qrcode
+import json
+
+from django.views.decorators.csrf import csrf_exempt
+
+
+from django.utils import timezone
 
 # Generate QR session
 def get_qr(request):
@@ -18,7 +24,7 @@ def get_qr(request):
     s = Session.objects.create(token=token, numeric_code=numeric_code)
 
     # TODO: Replace with actual frontend URL
-    mobile_url = f'https://localhost:5173/mobile/{token}/'
+    mobile_url = f'http://127.0.0.1:8000/attendance/get_code/{token}/'
 
     # Generate QR image (base64)
     qr = qrcode.make(mobile_url)
@@ -28,11 +34,15 @@ def get_qr(request):
 
     # Generate numeric code choices
     numeric_choices = {numeric_code}
+    print(numeric_choices)
+    
     while len(numeric_choices) < 5:
         numeric_choices.add(f"{secrets.randbelow(90) + 10}")
     numeric_choices = list(numeric_choices)
     secrets.SystemRandom().shuffle(numeric_choices)
 
+
+   
     return api_response(
         True,
         "QR generated successfully",
@@ -58,16 +68,24 @@ def status(request, token):
 def get_code(request, token):
     try:
         s = Session.objects.get(token=token)
-        return api_response(True, "Code retrieved", {"code": s.numeric_code})
+        return api_response(
+            True,
+            "Code retrieved",
+            {"code": s.numeric_code}
+        )
     except Session.DoesNotExist:
         return api_response(False, "Session not found", status=404)
-
-
 # Confirm signin / signout
+@csrf_exempt
 @require_POST
 def confirm(request, token):
     s = get_object_or_404(Session, token=token)
-    code = request.POST.get('code')
+    
+    try:
+        data = json.loads(request.body)
+        code = data.get('code')
+    except (json.JSONDecodeError, TypeError):
+        return api_response(False, "Invalid request", status=400)
 
     if code == s.numeric_code:
         user, _ = User.objects.get_or_create(username='demo_user')
@@ -76,18 +94,15 @@ def confirm(request, token):
         s.verified_by = user
         s.save()
 
-        # Check if user already has open attendance
         open_attendance = Attendance.objects.filter(
             user=user, signout_at__isnull=True
         ).last()
 
         if open_attendance:
-            # Update signout
             open_attendance.signout_at = timezone.now()
             open_attendance.save()
             action = "signout"
         else:
-            # Create new signin
             Attendance.objects.create(
                 user=user,
                 device='mobile',
@@ -99,8 +114,6 @@ def confirm(request, token):
         return api_response(True, "Action completed", {"action": action})
     else:
         return api_response(False, "Invalid code", status=400)
-
-
 # Attendance records
 def records_list(request):
     records = list(

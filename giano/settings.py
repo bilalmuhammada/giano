@@ -8,7 +8,10 @@ SECRET_KEY = 'django-insecure-replace-me-for-production'
 DEBUG = True
 
 ALLOWED_HOSTS = ['*'] 
-CSRF_TRUSTED_ORIGINS = ["https://*.ngrok-free.app"]
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',  # React frontend
+    'https://*.ngrok-free.app',  # If you're using ngrok for testing
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -63,7 +66,7 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True 
 AUTH_PASSWORD_VALIDATORS = []
 
 LANGUAGE_CODE = 'en-us'
