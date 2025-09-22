@@ -17,7 +17,11 @@ def get_qr(request):
     s = Session.objects.create(token=token, numeric_code=numeric_code)
 
     # this needs to be changed with FE url
+<<<<<<< HEAD
     mobile_url = f'https://localhost:5173/mobile/{token}/'
+=======
+    mobile_url = 'http://localhost:5173//{token}/'
+>>>>>>> frontendbranch
     # Generate QR image
     qr = qrcode.make(mobile_url)
     buffer = BytesIO()
